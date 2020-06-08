@@ -1,48 +1,30 @@
-import scala.collection.mutable.ArrayBuffer
-
-class Customer(private var name: String) {
-  private var rentals: ArrayBuffer[Rental] = ArrayBuffer()
-
-  def addRental(rental: Rental): Unit = {
-    rentals += rental
+case class Customer(
+  name: String,
+  rentals: Seq[Rental] = Seq.empty
+) {
+  def addRental(rental: Rental): Customer = {
+    copy(
+      rentals = rentals :+ rental
+    )
   }
 
-  def statement(): String = {
-    var totalAmount = 0d
-    var frequentRenterPoints = 0
-    var result = "Rental Record for " + name + "\n"
+  lazy val statement: String =
+    header + rentalLines + footer
 
-    val rentals = this.rentals.iterator
+  private lazy val header: String =
+    s"Rental Record for $name\n"
 
-    while(rentals.hasNext) {
-      val each = rentals.next()
+  private lazy val rentalLines =
+    rentals.map { rental =>
+      s"\t${rental.movie.title}\t${rental.amount}\n"
+    }.mkString
 
-      var thisAmount = 0d
+  private lazy val footer: String =
+    s"You owed $totalAmount\nYou earned $frequentRenterPoints frequent renter points\n"
 
-      each.movie.priceCode match {
-        case Movie.REGULAR =>
-          thisAmount += 2
-          if (each.daysRented > 2)
-            thisAmount += (each.daysRented - 2) * 1.5
-        case Movie.NEW_RELEASE =>
-          thisAmount += each.daysRented * 3
-        case Movie.CHILDREN =>
-          thisAmount += 1.5
-          if (each.daysRented > 3)
-            thisAmount += (each.daysRented - 3) * 1.5
-      }
+  private lazy val totalAmount =
+    rentals.foldLeft(0d)(_ + _.amount)
 
-      frequentRenterPoints += 1
-      if ((each.movie.priceCode == Movie.NEW_RELEASE) && each.daysRented > 1)
-        frequentRenterPoints += 1
-
-      result += "\t" + each.movie.title + "\t" + String.valueOf(thisAmount) + "\n"
-      totalAmount += thisAmount
-    }
-
-    result += "You owed " + String.valueOf(totalAmount) + "\n"
-    result += "You earned " + String.valueOf(frequentRenterPoints) + " frequent renter points\n"
-
-    result
-  }
+  private lazy val frequentRenterPoints =
+    rentals.foldLeft(0)(_ + _.frequentRenterPoints)
 }
