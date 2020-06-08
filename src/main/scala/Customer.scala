@@ -12,11 +12,7 @@ class Customer(private var name: String) {
     var frequentRenterPoints = 0
     var result = "Rental Record for " + name + "\n"
 
-    val rentals = this.rentals.iterator
-
-    while(rentals.hasNext) {
-      val each = rentals.next()
-
+    for(each <- rentals) {
       var thisAmount = 0d
 
       each.movie.priceCode match {
